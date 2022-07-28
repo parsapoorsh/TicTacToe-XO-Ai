@@ -1,7 +1,7 @@
 from functools import lru_cache
 from copy import copy
 from typing import Tuple, List, Iterable, Union
-inf = float('inf') # or can use 'from math import inf'
+from math import inf, ceil
 
 class players():
     X = -1
@@ -32,6 +32,12 @@ class Board(list):
         assert not self.is_end, 'Game is End'
         best_score = -inf
         best_move = 0
+
+        if self.count(None) == self.size*self.size:
+            # if start first, use centeral cell
+            best_move = ceil(self.size/2) * self.size - (self.size - ceil(self.size/2)) -1
+            self[best_move] = player
+            return best_move, inf, self.size*self.size
 
         for key in self.empty_cells:
             self[key] = player

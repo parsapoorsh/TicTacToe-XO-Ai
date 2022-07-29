@@ -46,6 +46,8 @@ class Board(list):
             if score > best_score:
                 best_score = score
                 best_move = key
+            if score == 1: # if is win move, break the loop
+                break
         
         self[best_move] = player
         return best_move, best_score, depth

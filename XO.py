@@ -8,7 +8,7 @@ class players():
     O = 1
 
 class Board(list):
-    __all__ = ('check', 'ai_move', 'empty_cells', 'cell_for_check', 'state')
+    __all__ = ('check', 'ai_move', 'empty_cells', 'cell_for_check', 'score2status', 'move', 'is_win', 'is_tie', 'is_end', 'clear', 'copy')
     def __init__(self, size: int=3):
         self.size=size
         super().__init__([None]*size*size)

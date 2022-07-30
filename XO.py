@@ -41,7 +41,7 @@ class Board(list):
 
         for key in self.empty_cells:
             self[key] = player
-            score, depth = self.minimax(player)
+            score, depth = self.alpha_beta(player)
             self[key] = None
             if score > best_score:
                 best_score = score
@@ -58,7 +58,14 @@ class Board(list):
         self[key] = player
 
     # TODO: add max depth
-    def minimax(self, player: int, depth: int = 1, is_max: bool = False)  -> Tuple[int, int]:
+    def alpha_beta(
+            self,
+            player: int,
+            depth: int = 1,
+            alpha: Union[int, float] = -inf,
+            beta: Union[int, float] = inf,
+            is_max: bool = False
+        )  -> Tuple[int, int]:
         if self.is_win(player): # win
             return 1, depth
         elif self.is_win(-player): # lose
@@ -73,19 +80,27 @@ class Board(list):
             best_score = -inf
             for key in self.empty_cells:
                 self[key] = player
-                score, d = self.minimax(player, depth+1, False)
+                score, d = self.alpha_beta(player, depth+1, alpha, beta, False)
                 self[key] = None
                 if score > best_score:
                     best_score = score
+                if score > alpha:
+                    alpha = score
+                if beta <= alpha:
+                    break
             return best_score, d
         else:
             worst_score = inf
             for key in self.empty_cells:
                 self[key] = -player
-                score, d = self.minimax(player, depth+1, True)
+                score, d = self.alpha_beta(player, depth+1, alpha, beta, True)
                 self[key] = None
                 if score < worst_score:
                     worst_score = score
+                if score < beta:
+                    beta = score
+                if beta <= alpha:
+                    break
             return worst_score, d
 
     @staticmethod

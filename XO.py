@@ -29,6 +29,7 @@ class Board(list):
 
     # TODO: make it async
     def ai_move(self, player: int) -> Tuple[int, Union[int, float], int]:
+        """Move the player with ai, returns move, score, depth"""
         assert not self.is_end, 'Game is End'
         best_score = -inf
         best_move = 0

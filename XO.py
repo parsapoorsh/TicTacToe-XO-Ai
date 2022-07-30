@@ -52,10 +52,11 @@ class Board(list):
         self[best_move] = player
         return best_move, best_score, depth
 
-    def move(self, key: int, player: int) -> None:
+    def move(self, key: int, player: int):
         key -= 1
         assert self[key] == None, 'Bad cell'
         self[key] = player
+        return self
 
     # TODO: add max depth
     def alpha_beta(

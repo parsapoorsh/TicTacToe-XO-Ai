@@ -1,6 +1,7 @@
 from functools import lru_cache
 from copy import copy
 from typing import Tuple, List, Iterable, Union
+from multiprocessing import Pool
 from math import inf, ceil
 
 class players():
@@ -26,7 +27,6 @@ class Board(list):
     def empty_cells(self) -> Iterable[int]:
         return [i for i in range(self.size*self.size) if self[i] == None]
 
-    # TODO: make it async
     def ai_move(self, player: int) -> Tuple[int, Union[int, float], int]:
         """Move the player with ai, returns move, score, depth"""
         assert not self.is_end(), 'Game is End'
@@ -39,15 +39,17 @@ class Board(list):
             self[best_move] = player
             return best_move, inf, self.size*self.size
 
-        for key in self.empty_cells():
-            self[key] = player
-            score, depth = self.alpha_beta(player)
-            self[key] = None
-            if score > best_score:
-                best_score = score
-                best_move = key
-            if score == 1: # if is win move, break the loop
-                break
+        with Pool() as p:
+            result = p.starmap(
+                Board.alpha_beta,
+                ((self.copy().move(i+1, player), player,) for i in self.empty_cells()),
+            )
+            for key, (score, depth,) in zip(self.empty_cells(), result):
+                if score > best_score:
+                    best_score = score
+                    best_move = key
+                if score == 1: # if is win move, break the loop
+                    break
         
         self[best_move] = player
         return best_move, best_score, depth
@@ -164,5 +166,5 @@ if __name__ == '__main__':
                 'X Win' if board.is_win(players.X) else
                 'O Win'
             )
-            board.clear()
+            #board.clear()
             break

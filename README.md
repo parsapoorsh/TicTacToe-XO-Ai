@@ -47,5 +47,5 @@ The best Tic Tac Toe move generator with alpha beta pruning algorithm (improved 
 ```
 
 ## TODO
-- add max_depth to ai_move
-- ai_move using multiple cores
+- [ ] add max_depth to ai_move
+- [x] ai_move using multiple cores

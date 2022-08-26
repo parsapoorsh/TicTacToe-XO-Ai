@@ -23,14 +23,13 @@ class Board(list):
         reuslt.append(tuple(i*n - (i-1)-1 for i in range(1, n+1)))                  # /
         return tuple(reuslt)
 
-    @property
     def empty_cells(self) -> Iterable[int]:
         return [i for i in range(self.size*self.size) if self[i] == None]
 
     # TODO: make it async
     def ai_move(self, player: int) -> Tuple[int, Union[int, float], int]:
         """Move the player with ai, returns move, score, depth"""
-        assert not self.is_end, 'Game is End'
+        assert not self.is_end(), 'Game is End'
         best_score = -inf
         best_move = 0
 
@@ -40,7 +39,7 @@ class Board(list):
             self[best_move] = player
             return best_move, inf, self.size*self.size
 
-        for key in self.empty_cells:
+        for key in self.empty_cells():
             self[key] = player
             score, depth = self.alpha_beta(player)
             self[key] = None
@@ -72,7 +71,7 @@ class Board(list):
             return 1, depth
         elif self.is_win(-player): # lose
             return -1, depth
-        elif self.is_tie: # tie
+        elif self.is_tie(): # tie
             return 0, depth
 
         #if depth >= max_depth:
@@ -80,7 +79,7 @@ class Board(list):
 
         if is_max:
             best_score = -inf
-            for key in self.empty_cells:
+            for key in self.empty_cells():
                 self[key] = player
                 score, d = self.alpha_beta(player, depth+1, alpha, beta, False)
                 self[key] = None
@@ -93,7 +92,7 @@ class Board(list):
             return best_score, d
         else:
             worst_score = inf
-            for key in self.empty_cells:
+            for key in self.empty_cells():
                 self[key] = -player
                 score, d = self.alpha_beta(player, depth+1, alpha, beta, True)
                 self[key] = None
@@ -119,8 +118,8 @@ class Board(list):
                 return True
         return False
     
-    is_tie: bool = property(lambda self: self.count(None) == 0)
-    is_end: bool = property(lambda self: self.is_tie or self.is_win(players.O) or self.is_win(players.X))
+    is_tie: bool = lambda self: self.count(None) == 0
+    is_end: bool = lambda self: self.is_tie() or self.is_win(players.O) or self.is_win(players.X)
 
     def clear(self):
         '''Clear the board.'''
@@ -158,10 +157,10 @@ if __name__ == '__main__':
         )
         
         last_player = -last_player # convert players
-        if board.is_end:
+        if board.is_end():
             print(
                 'Game is end,',
-                'Tie' if board.is_tie else
+                'Tie' if board.is_tie() else
                 'X Win' if board.is_win(players.X) else
                 'O Win'
             )

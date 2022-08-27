@@ -26,31 +26,20 @@ class Board(list):
     def empty_cells(self) -> Iterable[int]:
         return [i for i in range(self.size*self.size) if self[i] == None]
 
-    # TODO: make it async
     def ai_move(self, player: int) -> Tuple[int, Union[int, float], int]:
         """Move the player with ai, returns move, score, depth"""
         assert not self.is_end(), 'Game is End'
         best_score = -inf
-        best_move = 0
+        best_move = None
 
-        if self.count(None) == self.size*self.size:
-            # if start first, use centeral cell
-            best_move = ceil(self.size/2) * self.size - (self.size - ceil(self.size/2)) -1
-            self[best_move] = player
-            return best_move, inf, self.size*self.size
-
-        for key in self.empty_cells():
-            self[key] = player
-            score, depth = self.alpha_beta(player)
-            self[key] = None
-            if score > best_score:
+        r = self.evaluate(player)
+        for key, score in r.items():
+            if score >= best_score:
                 best_score = score
                 best_move = key
-            if score == 1: # if is win move, break the loop
-                break
         
         self[best_move] = player
-        return best_move, best_score, depth
+        return best_move, best_score
 
     def move(self, key: int, player: int):
         key -= 1
@@ -58,59 +47,25 @@ class Board(list):
         self[key] = player
         return self
 
-    # TODO: add max depth
-    def alpha_beta(
-            self,
-            player: int,
-            depth: int = 1,
-            alpha: Union[int, float] = -inf,
-            beta: Union[int, float] = inf,
-            is_max: bool = False
-        )  -> Tuple[int, int]:
-        if self.is_win(player): # win
-            return 1, depth
-        elif self.is_win(-player): # lose
-            return -1, depth
-        elif self.is_tie(): # tie
-            return 0, depth
-
-        #if depth >= max_depth:
-        #    return 0, depth
-
-        if is_max:
-            best_score = -inf
-            for key in self.empty_cells():
-                self[key] = player
-                score, d = self.alpha_beta(player, depth+1, alpha, beta, False)
-                self[key] = None
-                if score > best_score:
-                    best_score = score
-                if score > alpha:
-                    alpha = score
-                if beta <= alpha:
-                    break
-            return best_score, d
-        else:
-            worst_score = inf
-            for key in self.empty_cells():
-                self[key] = -player
-                score, d = self.alpha_beta(player, depth+1, alpha, beta, True)
-                self[key] = None
-                if score < worst_score:
-                    worst_score = score
-                if score < beta:
-                    beta = score
-                if beta <= alpha:
-                    break
-            return worst_score, d
-
-    @staticmethod
-    def score2status(score: Union[int, float]) -> str:
-        return (
-            'tie' if score == 0 else
-            'win' if score > 0 else
-            'lose'
-        )
+    def evaluate(self, player: int) -> dict:
+        result = {}
+        for row in self.cell_for_check(self.size):
+            for i in row:
+                if i not in self.empty_cells():
+                    continue
+                if any(self[i] == players.O for i in row) and \
+                   any(self[i] == players.X for i in row):
+                    continue
+                if i not in result:
+                    result[i] = 0
+                
+                self[i] = -player
+                if self.is_win(players.X) or self.is_win(players.O):
+                    result[i] = inf
+                else:
+                    result[i] += 1
+                self[i] = None
+        return {**{i: 0 for i in board.empty_cells()}, **result}
     
     def is_win(self, player: int) -> bool:
         for row in self.cell_for_check(self.size):
@@ -139,24 +94,18 @@ class Board(list):
 
 if __name__ == '__main__':
     from time import time
-    board = Board(3)
-    last_player = players.X
+    board = Board(9)
+    ai_player = players.X
     while 1:
         t1 = time()
-        move, score, depth = board.ai_move(last_player)
+        move, score = board.ai_move(ai_player)
         t2 = time()
         tT = round(t2-t1, 3)
-        print(
-            (
-                f'processed depth: {depth}, '
-                f'status: {board.score2status(score)}, '
-                f'move: {move+1}, '
-                f'{tT}s\n'
-            ),
-            board
-        )
-        
-        last_player = -last_player # convert players
+        print(f'move: {move+1}, {tT}s', board, sep='\n')
+
+        if not board.is_end():
+            board.move(int(input('Human move: ')), -ai_player)
+
         if board.is_end():
             print(
                 'Game is end,',

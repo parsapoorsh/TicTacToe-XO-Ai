@@ -27,11 +27,12 @@ class Board(list):
     def empty_cells(self) -> Iterable[int]:
         return [i for i in range(self.size*self.size) if self[i] == None]
 
-    def ai_move(self, player: int) -> Tuple[int, Union[int, float], int]:
+    def ai_move(self, player: int, max_depth: Union[int, None]=None, multiprocess: bool=True) -> Tuple[int, Union[int, float], int]:
         """Move the player with ai, returns move, score, depth"""
         assert not self.is_end(), 'Game is End'
         best_score = -inf
-        best_move = 0
+        best_move = None
+        max_depth = max_depth if max_depth != None else self.size*self.size
 
         if self.count(None) == self.size*self.size:
             # if start first, use centeral cell
@@ -39,20 +40,29 @@ class Board(list):
             self[best_move] = player
             return best_move, inf, self.size*self.size
 
-        with Pool() as p:
-            result = p.starmap(
+        if multiprocess:
+            with Pool() as p:
+                result = p.starmap(
+                    Board.alpha_beta,
+                    ((self.copy().move(i+1, player), player, max_depth,) for i in self.empty_cells()),
+                )
+        else:
+            result = map(
                 Board.alpha_beta,
-                ((self.copy().move(i+1, player), player,) for i in self.empty_cells()),
+                [self.copy().move(i+1, player) for i in self.empty_cells()],
+                (player,)*len(self.empty_cells()),
+                (max_depth,)*len(self.empty_cells()),
             )
-            for key, (score, depth,) in zip(self.empty_cells(), result):
-                if score > best_score:
-                    best_score = score
-                    best_move = key
-                if score == 1: # if is win move, break the loop
-                    break
+        
+        for key, (score, depth,) in zip(self.empty_cells(), result):
+            if score > best_score:
+                best_score = score
+                best_move = key
+            if score == 1: # if is win move, break the loop
+                break
         
         self[best_move] = player
-        return best_move, best_score, depth
+        return best_move, best_score, max_depth-depth+1
 
     def move(self, key: int, player: int):
         key -= 1
@@ -60,11 +70,10 @@ class Board(list):
         self[key] = player
         return self
 
-    # TODO: add max depth
     def alpha_beta(
             self,
             player: int,
-            depth: int = 1,
+            depth: int,
             alpha: Union[int, float] = -inf,
             beta: Union[int, float] = inf,
             is_max: bool = False
@@ -73,17 +82,15 @@ class Board(list):
             return 1, depth
         elif self.is_win(-player): # lose
             return -1, depth
-        elif self.is_tie(): # tie
+        elif self.is_tie() or depth <= 0: # tie
             return 0, depth
 
-        #if depth >= max_depth:
-        #    return 0, depth
 
         if is_max:
             best_score = -inf
             for key in self.empty_cells():
                 self[key] = player
-                score, d = self.alpha_beta(player, depth+1, alpha, beta, False)
+                score, d = self.alpha_beta(player, depth-1, alpha, beta, False)
                 self[key] = None
                 if score > best_score:
                     best_score = score
@@ -96,7 +103,7 @@ class Board(list):
             worst_score = inf
             for key in self.empty_cells():
                 self[key] = -player
-                score, d = self.alpha_beta(player, depth+1, alpha, beta, True)
+                score, d = self.alpha_beta(player, depth-1, alpha, beta, True)
                 self[key] = None
                 if score < worst_score:
                     worst_score = score
@@ -145,7 +152,7 @@ if __name__ == '__main__':
     last_player = players.X
     while 1:
         t1 = time()
-        move, score, depth = board.ai_move(last_player)
+        move, score, depth = board.ai_move(last_player, multiprocess=False)
         t2 = time()
         tT = round(t2-t1, 3)
         print(

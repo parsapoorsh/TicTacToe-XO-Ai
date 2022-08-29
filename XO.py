@@ -48,7 +48,7 @@ class Board(list):
         return self
 
     def evaluate(self, player: int) -> dict:
-        result = {}
+        result = {i: 0 for i in self.empty_cells()}
         for row in self.cell_for_check(self.size):
             for i in row:
                 if i not in self.empty_cells():
@@ -56,8 +56,6 @@ class Board(list):
                 if any(self[i] == players.O for i in row) and \
                    any(self[i] == players.X for i in row):
                     continue
-                if i not in result:
-                    result[i] = 0
                 
                 self[i] = -player
                 if self.is_win(players.X) or self.is_win(players.O):
@@ -65,7 +63,7 @@ class Board(list):
                 else:
                     result[i] += 1
                 self[i] = None
-        return {**{i: 0 for i in board.empty_cells()}, **result}
+        return result
     
     def is_win(self, player: int) -> bool:
         for row in self.cell_for_check(self.size):
@@ -94,7 +92,7 @@ class Board(list):
 
 if __name__ == '__main__':
     from time import time
-    board = Board(9)
+    board = Board(3)
     ai_player = players.X
     while 1:
         t1 = time()

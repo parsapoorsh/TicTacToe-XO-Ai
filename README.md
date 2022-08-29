@@ -1,5 +1,5 @@
 # TicTacToe-XO-Ai
-The best Tic Tac Toe move generator with alpha beta pruning algorithm (improved minimax) with many features
+The best Tic Tac Toe move generator and unlimited board.
 
 ## Ai Move
 ``` python
@@ -11,8 +11,8 @@ The best Tic Tac Toe move generator with alpha beta pruning algorithm (improved 
 +---+---+---+
 |   |   |   |
 +---+---+---+
->>> board.ai_move(players.O) # move, score, depth
-(7, 0, 2)
+>>> board.ai_move(players.O) # move, score
+(7, 0)
 >>> board
 +---+---+---+
 | O | X |   |
@@ -45,7 +45,3 @@ The best Tic Tac Toe move generator with alpha beta pruning algorithm (improved 
 |   |   |   |   |
 +---+---+---+---+
 ```
-
-## TODO
-- add max_depth to ai_move
-- ai_move using multiple cores

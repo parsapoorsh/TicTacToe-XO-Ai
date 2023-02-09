@@ -45,16 +45,19 @@ class Board(list):
         assert not self.is_end(), 'Game is End'
         best_score = -inf
         best_move = None
+        best_depth = 0
 
         for key in self.empty_cells():
             self[key] = player
-            score: int = self.alpha_beta(player)
+            score, depth = self.alpha_beta(player)
             self[key] = None
             if score > best_score:
                 best_score = score
                 best_move = key
-            if score == 1:  # if is win move, break the loop
-                break
+                best_depth = depth
+            elif score == best_score and depth < best_depth:
+                best_move = key
+                best_depth = depth
 
         self[best_move] = player
         return best_move, best_score
@@ -69,22 +72,23 @@ class Board(list):
     def alpha_beta(
             self,
             player: int,
+            depth: int = 0,
             alpha: Union[int, float] = -inf,
             beta: Union[int, float] = inf,
             is_max: bool = False
-    ) -> int:
+    ) -> Tuple[Union[float, int], int]:
         if self.is_win(player):  # win
-            return 1
+            return 1, depth
         elif self.is_win(-player):  # lose
-            return -1
+            return -1, depth
         elif self.is_tie():  # tie
-            return 0
+            return 0, depth
 
         if is_max:
             best_score = -inf
             for key in self.empty_cells():
                 self[key] = player
-                score = self.alpha_beta(player, alpha, beta, False)
+                score, depth = self.alpha_beta(player, depth + 1, alpha, beta, False)
                 self[key] = None
                 if score > best_score:
                     best_score = score
@@ -92,12 +96,12 @@ class Board(list):
                     alpha = score
                 if beta <= alpha:
                     break
-            return best_score
+            return best_score, depth
         else:
             worst_score = inf
             for key in self.empty_cells():
                 self[key] = -player
-                score = self.alpha_beta(player, alpha, beta, True)
+                score, depth = self.alpha_beta(player, depth + 1, alpha, beta, True)
                 self[key] = None
                 if score < worst_score:
                     worst_score = score
@@ -105,7 +109,7 @@ class Board(list):
                     beta = score
                 if beta <= alpha:
                     break
-            return worst_score
+            return worst_score, depth
 
     def is_win(self, player: int) -> bool:
         for row in self.cell_for_check(self.size):

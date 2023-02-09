@@ -138,3 +138,25 @@ class Board(list):
             row = [f"{assets[i]:^3}" for i in self[i: i + self.size]]
             result += f"|{'|'.join(row)}|\n{split_row}"
         return result[:-1]
+
+
+if __name__ == '__main__':
+    from time import time
+    board = Board()
+    while 1:
+        t1 = time()
+        move, score = board.ai_move(board.turn)
+        t2 = time()
+        tT = round(t2-t1, 3)
+        print(
+            board,
+            f'Best move: {move}, Score: {score}\n'
+            f'Calculated in: {tT}s\n',
+            sep='\n',
+        )
+        if board.is_end():
+            print(
+                'Game is end,',
+                'Tie' if board.is_tie() else f'{board.turn} Win'
+            )
+            break

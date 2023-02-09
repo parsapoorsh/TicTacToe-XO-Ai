@@ -46,12 +46,6 @@ class Board(list):
         best_score = -inf
         best_move = None
 
-        if self.count(None) == self.size * self.size:
-            # if start first, use centeral cell
-            best_move = ceil(self.size / 2) * self.size - (self.size - ceil(self.size / 2)) - 1
-            self[best_move] = player
-            return best_move, inf
-
         for key in self.empty_cells():
             self[key] = player
             score: int = self.alpha_beta(player)

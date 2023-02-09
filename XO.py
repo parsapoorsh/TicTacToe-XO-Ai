@@ -1,7 +1,6 @@
 from functools import lru_cache
 from copy import copy
 from typing import Tuple, List, Iterable, Union
-from multiprocessing import Pool
 from math import inf, ceil
 
 class players():
@@ -27,7 +26,8 @@ class Board(list):
     def empty_cells(self) -> Iterable[int]:
         return [i for i in range(self.size*self.size) if self[i] == None]
 
-    def ai_move(self, player: int, max_depth: Union[int, None]=None, multiprocess: bool=True) -> Tuple[int, Union[int, float], int]:
+    # TODO: make it async
+    def ai_move(self, player: int) -> Tuple[int, Union[int, float], int]:
         """Move the player with ai, returns move, score, depth"""
         assert not self.is_end(), 'Game is End'
         best_score = -inf
@@ -40,21 +40,10 @@ class Board(list):
             self[best_move] = player
             return best_move, inf, self.size*self.size
 
-        if multiprocess:
-            with Pool() as p:
-                result = p.starmap(
-                    Board.alpha_beta,
-                    ((self.copy().move(i+1, player), player, max_depth,) for i in self.empty_cells()),
-                )
-        else:
-            result = map(
-                Board.alpha_beta,
-                [self.copy().move(i+1, player) for i in self.empty_cells()],
-                (player,)*len(self.empty_cells()),
-                (max_depth,)*len(self.empty_cells()),
-            )
-        
-        for key, (score, depth,) in zip(self.empty_cells(), result):
+        for key in self.empty_cells():
+            self[key] = player
+            score, depth = self.alpha_beta(player)
+            self[key] = None
             if score > best_score:
                 best_score = score
                 best_move = key

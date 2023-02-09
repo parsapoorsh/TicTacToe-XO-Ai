@@ -53,7 +53,7 @@ class Board(list):
         return {**{i: 0 for i in board.empty_cells()}, **result}
 
     # TODO: make it async
-    def ai_move(self, player: int) -> Tuple[int, int, int]:
+    def ai_move(self, player: int, max_depth: Union[int, None] = None) -> Tuple[int, int, int]:
         """Move the player with AI, returns move, score, depth"""
         assert not self.is_end(), 'Game is End'
         best_score = -inf
@@ -63,7 +63,7 @@ class Board(list):
 
         for key in self.empty_cells():
             self[key] = player
-            score, depth = self.alpha_beta(player)
+            score, depth = self.alpha_beta(player, max_depth=max_depth)
             self[key] = None
             if score > best_score:
                 best_score = score
@@ -91,6 +91,7 @@ class Board(list):
             self,
             player: int,
             depth: int = 1,
+            max_depth: Union[int, None] = None,
             alpha: Union[int, float] = -inf,
             beta: Union[int, float] = inf,
             is_max: bool = False
@@ -99,14 +100,14 @@ class Board(list):
             return 1, depth
         elif self.is_win(-player):  # lose
             return -1, depth
-        elif self.is_tie():  # tie
+        elif self.is_tie() or depth == max_depth:  # tie
             return 0, depth
 
         if is_max:
             best_score = -inf
             for key in self.empty_cells():
                 self[key] = player
-                score, d = self.alpha_beta(player, depth + 1, alpha, beta, False)
+                score, d = self.alpha_beta(player, depth + 1, max_depth, alpha, beta, False)
                 self[key] = None
                 if score > best_score:
                     best_score = score
@@ -119,7 +120,7 @@ class Board(list):
             worst_score = inf
             for key in self.empty_cells():
                 self[key] = -player
-                score, d = self.alpha_beta(player, depth + 1, alpha, beta, True)
+                score, d = self.alpha_beta(player, depth + 1, max_depth, alpha, beta, True)
                 self[key] = None
                 if score < worst_score:
                     worst_score = score
@@ -158,10 +159,10 @@ class Board(list):
 
 if __name__ == '__main__':
     from time import time
-    board = Board()
+    board = Board(4)
     while 1:
         t1 = time()
-        move, score, depth = board.ai_move(board.turn)
+        move, score, depth = board.ai_move(board.turn, 4)
         t2 = time()
         tT = round(t2-t1, 3)
         print(

@@ -1,7 +1,7 @@
 from copy import copy
 from enum import IntEnum
 from functools import lru_cache
-from math import inf, ceil
+from math import inf
 from typing import Tuple, Iterable, Union
 
 
@@ -39,13 +39,27 @@ class Board(list):
     def empty_cells(self) -> Iterable[int]:
         return [i for i in range(self.size * self.size) if self[i] is None]
 
+    def evaluate(self) -> dict:
+        result = {}
+        for row in self.cell_for_check(self.size):
+            for i in row:
+                if i not in self.empty_cells():
+                    continue
+                if any(self[i] is not None for i in row):
+                    continue
+                if i not in result:
+                    result[i] = 0
+                result[i] += 1
+        return {**{i: 0 for i in board.empty_cells()}, **result}
+
     # TODO: make it async
-    def ai_move(self, player: int) -> Tuple[int, Union[float, int]]:
+    def ai_move(self, player: int) -> Tuple[int, int, int]:
         """Move the player with AI, returns move, score, depth"""
         assert not self.is_end(), 'Game is End'
         best_score = -inf
         best_move = None
         best_depth = 0
+        evaluation = self.evaluate()
 
         for key in self.empty_cells():
             self[key] = player
@@ -55,12 +69,16 @@ class Board(list):
                 best_score = score
                 best_move = key
                 best_depth = depth
-            elif score == best_score and depth < best_depth:
-                best_move = key
-                best_depth = depth
+            elif score == best_score:
+                if depth < best_depth:
+                    best_move = key
+                    best_depth = depth
+                elif depth == best_depth and \
+                        evaluation[key] > evaluation[best_move]:
+                    best_move = key
 
         self[best_move] = player
-        return best_move, best_score
+        return best_move, best_score, best_depth
 
     def move(self, key: int, player: int):
         assert self.turn == player, f'Its not {player} turn'
@@ -72,7 +90,7 @@ class Board(list):
     def alpha_beta(
             self,
             player: int,
-            depth: int = 0,
+            depth: int = 1,
             alpha: Union[int, float] = -inf,
             beta: Union[int, float] = inf,
             is_max: bool = False
@@ -88,7 +106,7 @@ class Board(list):
             best_score = -inf
             for key in self.empty_cells():
                 self[key] = player
-                score, depth = self.alpha_beta(player, depth + 1, alpha, beta, False)
+                score, d = self.alpha_beta(player, depth + 1, alpha, beta, False)
                 self[key] = None
                 if score > best_score:
                     best_score = score
@@ -96,12 +114,12 @@ class Board(list):
                     alpha = score
                 if beta <= alpha:
                     break
-            return best_score, depth
+            return best_score, d
         else:
             worst_score = inf
             for key in self.empty_cells():
                 self[key] = -player
-                score, depth = self.alpha_beta(player, depth + 1, alpha, beta, True)
+                score, d = self.alpha_beta(player, depth + 1, alpha, beta, True)
                 self[key] = None
                 if score < worst_score:
                     worst_score = score
@@ -109,7 +127,7 @@ class Board(list):
                     beta = score
                 if beta <= alpha:
                     break
-            return worst_score, depth
+            return worst_score, d
 
     def is_win(self, player: int) -> bool:
         for row in self.cell_for_check(self.size):
@@ -143,13 +161,13 @@ if __name__ == '__main__':
     board = Board()
     while 1:
         t1 = time()
-        move, score = board.ai_move(board.turn)
+        move, score, depth = board.ai_move(board.turn)
         t2 = time()
         tT = round(t2-t1, 3)
         print(
             board,
-            f'Best move: {move}, Score: {score}\n'
-            f'Calculated in: {tT}s\n',
+            f'Best move: {move}, Score: {score}, Depth: {depth}\n'
+            f'Calculated in: {tT}s',
             sep='\n',
         )
         if board.is_end():

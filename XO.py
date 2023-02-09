@@ -1,12 +1,14 @@
 from copy import copy
+from enum import IntEnum
 from functools import lru_cache
 from math import inf, ceil
 from typing import Tuple, Iterable, Union
 
 
-class PLAYERS:
+class PLAYERS(IntEnum):
     X = -1
     O = 1
+    __str__ = __repr__ = lambda self: self.name
 
 
 # noinspection PyUnresolvedReferences
@@ -129,8 +131,10 @@ class Board(list):
         return copy(self)
 
     def __repr__(self) -> str:
-        pcha = {PLAYERS.X: 'X', PLAYERS.O: 'O', None: ' '}
-        string = row = f'+{"-" * 3}' * self.size + '+\n'
+        split_row = f'+{"-" * 3 }' * self.size + '+\n'
+        assets = {**PLAYERS._value2member_map_, None: ' '}
+        result = split_row
         for i in range(0, self.size * self.size, self.size):
-            string += '|' + '|'.join(f"{pcha[i]:^3}" for i in self[i: i + self.size]) + f'|\n{row}'
-        return string[:-1]
+            row = [f"{assets[i]:^3}" for i in self[i: i + self.size]]
+            result += f"|{'|'.join(row)}|\n{split_row}"
+        return result[:-1]

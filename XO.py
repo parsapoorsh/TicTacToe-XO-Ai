@@ -17,6 +17,13 @@ class Board(list):
         self.size = size
         super().__init__([None] * size * size)
 
+    @property
+    def turn(self) -> int:
+        """it tells which player's turn it is to move next"""
+        if self.count(None) % 2 == 1:
+            return PLAYERS.X
+        return PLAYERS.O
+
     @staticmethod
     @lru_cache
     def cell_for_check(n):
@@ -57,6 +64,7 @@ class Board(list):
         return best_move, best_score
 
     def move(self, key: int, player: int):
+        assert self.turn == player, f'Its not {player} turn'
         key -= 1
         assert self[key] is None, 'Bad cell'
         self[key] = player

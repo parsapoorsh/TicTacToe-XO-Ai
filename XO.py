@@ -22,7 +22,7 @@ class Board(list):
     @property
     def turn(self) -> int:
         """it tells which player's turn it is to move next"""
-        if self.count(None) % 2 == 1:
+        if (self.count(None) + self.size*self.size) % 2 == 0:
             return PLAYERS.X
         return PLAYERS.O
 

@@ -173,7 +173,7 @@ if __name__ == '__main__':
         )
         if board.is_end():
             print(
-                'Game is end,',
+                'Game over,',
                 'Tie' if board.is_tie() else f'{board.turn} Win'
             )
             break
